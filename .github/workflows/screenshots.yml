@@ -1,0 +1,58 @@
+name: Update screenshots
+
+# Opens the live site, takes README screenshots and commits them.
+# Runs when this file changes, or manually from the Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/screenshots.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright
+        run: |
+          mkdir -p /tmp/shot && cd /tmp/shot
+          npm init -y >/dev/null
+          npm i playwright@1.49.1
+          npx playwright install --with-deps chromium
+      - name: Take screenshots
+        run: |
+          cat > /tmp/shot/shoot.js <<'JS'
+          const { chromium } = require('playwright');
+          const url = 'https://weathercast-zain.vercel.app';
+          const out = process.env.GITHUB_WORKSPACE + '/docs/';
+          (async () => {
+            const b = await chromium.launch();
+            const shots = [
+              { file: 'screenshot.png', w: 1440, h: 900 },
+              { file: 'mobile.png', w: 390, h: 844 },
+            ];
+            for (const s of shots) {
+              const p = await b.newPage({ viewport: { width: s.w, height: s.h } });
+              await p.goto(url, { waitUntil: 'networkidle' });
+              await p.fill('#city', 'Lahore'); await p.keyboard.press('Enter'); await p.waitForLoadState('networkidle');
+              await p.waitForTimeout(4000);
+              await p.screenshot({ path: out + s.file });
+              await p.close();
+            }
+            await b.close();
+          })();
+          JS
+          mkdir -p docs
+          node /tmp/shot/shoot.js
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add docs/*.png
+          git diff --cached --quiet || (git commit -m "Update screenshots from the live site" && git push)
