@@ -11,6 +11,10 @@ Current conditions, a 24-hour forecast and a 5-day outlook for any city in the w
 ![OpenWeatherMap](https://img.shields.io/badge/API-OpenWeatherMap-EB6E4B)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+**[▶ Live demo: weathercast-zain.vercel.app](https://weathercast-zain.vercel.app)**
+
+<img src="docs/screenshot.png" alt="Weathercast showing Lahore at night: hero card, detail tiles with sun arc, hourly curve and 5-day outlook" width="640"/>&nbsp;<img src="docs/mobile.png" alt="Weathercast on a phone" width="190"/>
+
 </div>
 
 ---
@@ -110,7 +114,11 @@ lib/
 
 ## Deployment
 
-Import the repository into [Vercel](https://vercel.com/new), add `NEXT_PUBLIC_OPENWEATHER_API_KEY` under Environment Variables, and deploy.
+Live at [weathercast-zain.vercel.app](https://weathercast-zain.vercel.app). To deploy your own copy, import the repository into [Vercel](https://vercel.com/new), add `NEXT_PUBLIC_OPENWEATHER_API_KEY` under Environment Variables, and deploy.
+
+## Screenshots
+
+The screenshots above are taken from the live site by the **Update screenshots** GitHub Action (`.github/workflows/screenshots.yml`). Run it from the Actions tab to refresh them after a redesign.
 
 ## Author
 
