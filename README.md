@@ -1,199 +1,107 @@
-# Weather Forecast App
+<div align="center">
 
-A modern, real-time weather application built with Next.js and React. Get instant weather updates, hourly forecasts, and 5-day predictions for any city worldwide.
+# 🌤️ Weather Forecast App
 
-**Developer**: Zain Aftab
+Current conditions, a 24-hour forecast and a 5-day outlook for any city in the world, built with Next.js, React and the OpenWeatherMap API.
 
-## Features
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+![OpenWeatherMap](https://img.shields.io/badge/API-OpenWeatherMap-EB6E4B)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-- **Real-time Weather Data**: Current temperature, humidity, wind speed, and atmospheric pressure
-- **City Search**: Search for weather in any city worldwide with instant results
-- **Geolocation Support**: Automatically detect and display weather for your current location
-- **Hourly Forecast**: View weather predictions for the next 24 hours
-- **5-Day Forecast**: Plan ahead with a comprehensive 5-day weather forecast
-- **Temperature Unit Toggle**: Switch between Celsius and Fahrenheit with one click
-- **Sunrise & Sunset Times**: Know exactly when the sun rises and sets
-- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
-- **Dark Mode Support**: Beautiful dark mode for comfortable viewing
-- **Last Updated Timestamp**: See when the weather data was last refreshed
-- **Error Handling**: Clear error messages and retry functionality
-
-## Technologies Used
-
-- **Frontend Framework**: Next.js 16 with React 19
-- **Styling**: Tailwind CSS v4
-- **Icons**: Lucide React
-- **API**: OpenWeatherMap API
-- **Language**: TypeScript
-- **Components**: shadcn/ui
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ installed
-- An OpenWeatherMap API key (included in this project)
-
-### Installation
-
-1. Clone or download this project
-2. Install dependencies using the shadcn CLI:
-   ```bash
-   npx shadcn-cli@latest init
-   ```
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
-
-### Environment Variables
-
-The app uses the following API key (already configured):
-- `API_KEY`: `fb8de5c7d63da57183ef875cd7a1103e` (OpenWeatherMap)
-
-## How to Use
-
-### Search for a City
-1. Enter a city name in the search bar at the top
-2. Press Enter or click the search button
-3. Weather data loads instantly
-
-### Use Your Current Location
-1. Click the "My Location" button in the top-right
-2. Allow location access when prompted
-3. Weather for your current location displays automatically
-
-### Toggle Temperature Units
-1. Click the temperature unit button (°C or °F) in the top-right
-2. All temperatures instantly convert to your preferred unit
-
-### View Forecasts
-- **Hourly**: See detailed weather for the next 24 hours
-- **5-Day**: Get a daily forecast for the next 5 days
-
-## Project Structure
-
-```
-├── app/
-│   ├── page.tsx           # Main weather app page
-│   ├── layout.tsx         # Root layout
-│   ├── globals.css        # Global styles
-│   └── loading.tsx        # Loading state
-├── components/
-│   ├── current-weather.tsx    # Current weather display
-│   ├── search-bar.tsx         # City search input
-│   ├── forecast-card.tsx      # Individual forecast card
-│   ├── hourly-forecast.tsx    # Hourly forecast display
-│   ├── loading-spinner.tsx    # Loading spinner
-│   └── ui/                    # shadcn/ui components
-└── README.md              # This file
-```
-
-## Features in Detail
-
-### Current Weather Card
-Displays real-time weather including:
-- Current temperature and "feels like" temperature
-- Weather description with icon
-- Humidity percentage
-- Wind speed
-- Atmospheric pressure
-- Visibility distance
-- Sunrise and sunset times
-- Last updated timestamp
-
-### Hourly Forecast
-Shows the next 24 hours with:
-- Time-based weather predictions
-- Temperature and conditions
-- Hourly weather icons
-- Horizontally scrollable for easy browsing
-
-### 5-Day Forecast
-5 individual cards showing:
-- Daily date
-- Maximum and minimum temperatures
-- Weather conditions and icons
-- Humidity levels
-
-## API Details
-
-This app uses the **OpenWeatherMap API** with the following endpoints:
-
-- **Current Weather**: `https://api.openweathermap.org/data/2.5/weather`
-- **Forecast Data**: `https://api.openweathermap.org/data/2.5/forecast`
-
-Both endpoints support queries by:
-- City name: `?q=London`
-- Coordinates: `?lat=51.5074&lon=-0.1278`
-- Units: `metric` (Celsius) or `imperial` (Fahrenheit)
-
-## Error Handling
-
-The app includes comprehensive error handling for:
-- City not found errors
-- Network failures
-- Geolocation permission denied
-- Location unavailable
-- API request timeouts
-- Invalid responses
-
-All errors display user-friendly messages with a "Retry" button.
-
-## Performance Features
-
-- Efficient state management with React hooks
-- Data validation before rendering
-- Proper error boundaries
-- Responsive images and icons
-- Optimized CSS with Tailwind utility classes
-- Fast API calls with proper error handling
-
-## Browser Support
-
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
-- Mobile browsers (iOS Safari, Chrome Mobile)
-
-## Future Enhancements
-
-Potential features for future versions:
-- Weather alerts and warnings
-- Multiple location tracking
-- Weather history and trends
-- Air quality index (AQI)
-- UV index information
-- Extended 10-day forecast
-- Precipitation probability
-- Wind direction visualization
-- Weather maps integration
-
-## Troubleshooting
-
-### "City not found" error
-- Check spelling of the city name
-- Try using the city with country code (e.g., "London, UK")
-
-### Geolocation not working
-- Ensure location permission is granted in browser settings
-- Some browsers require HTTPS for geolocation
-- Check if your device has location services enabled
-
-### Weather data not updating
-- Click the Retry button in the error message
-- Try refreshing the page
-- Check your internet connection
-
-## License
-
-This project is free to use and modify.
-
-## Feedback & Support
-
-For issues or suggestions, please reach out to the developer.
+</div>
 
 ---
 
-**Built with ❤️ by Zain Aftab**
+## Features
+
+- **City search:** look up the weather for any city by name (opens on New York)
+- **My Location:** one click uses the browser's geolocation to show the weather where you are
+- **Current weather card:** temperature, "feels like", description and icon, humidity, wind speed, pressure, visibility, sunrise and sunset, and a "last updated" time
+- **Hourly forecast:** the next 24 hours in 3-hour steps
+- **5-day forecast:** one card per day with the expected conditions
+- **°C / °F toggle:** reloads the data in metric or imperial units
+- **Error handling:** clear messages for unknown cities or network problems, with a Retry button
+- **Responsive design** with a light gradient theme and dark-mode styles
+
+## Tech stack
+
+| Layer | Tools |
+|---|---|
+| Framework | Next.js 16 (App Router), React 19 |
+| Language | TypeScript |
+| UI | Tailwind CSS 4, shadcn/ui, Lucide icons |
+| Data | [OpenWeatherMap API](https://openweathermap.org/api) (Current Weather + 5 day / 3 hour Forecast) |
+
+## Getting started
+
+**Requirements:** Node.js 18.18 or newer and a free OpenWeatherMap API key ([sign up here](https://home.openweathermap.org/users/sign_up)).
+
+```bash
+git clone https://github.com/ZainAftab-dev/Weather-App.git
+cd Weather-App
+npm install
+```
+
+Set your API key in `app/page.tsx`:
+
+```ts
+const API_KEY = "your_openweathermap_api_key"
+```
+
+Then start the app:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). For a production build: `npm run build` then `npm start`.
+
+> New OpenWeatherMap keys can take up to two hours to activate. If you see "Invalid API key", wait and try again.
+
+## API endpoints used
+
+| Endpoint | Used for |
+|---|---|
+| `GET /data/2.5/weather?q={city}` | Current weather by city name |
+| `GET /data/2.5/weather?lat={lat}&lon={lon}` | Current weather for "My Location" |
+| `GET /data/2.5/forecast?q={city}` | Hourly (first 8 × 3 h) and 5-day forecasts |
+
+## Project structure
+
+```
+app/
+├── layout.tsx               # root layout and metadata
+├── page.tsx                 # state, API calls, geolocation, unit toggle
+├── loading.tsx              # loading state
+├── actions.ts               # server-action versions of the API calls (reads OPENWEATHER_API_KEY)
+└── globals.css
+components/
+├── search-bar.tsx           # city search
+├── current-weather.tsx      # current conditions card
+├── hourly-forecast.tsx      # next 24 hours
+├── forecast-card.tsx        # one day of the 5-day forecast
+└── loading-spinner.tsx
+```
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| "City not found" | Check the spelling, or add the country code, e.g. `Lahore,PK` |
+| My Location does nothing | Allow location access in the browser; geolocation needs `https` or `localhost` |
+| "Invalid API key" | Check the key in `app/page.tsx`; new keys need time to activate |
+
+## Deployment
+
+Import the repository into [Vercel](https://vercel.com/new) and deploy with the default settings.
+
+## Author
+
+**Zain Aftab** · [GitHub](https://github.com/ZainAftab-dev) · [LinkedIn](https://www.linkedin.com/in/zain-aftab-563727295/)
+
+## License
+
+[MIT](LICENSE)
