@@ -1,178 +1,61 @@
-"use client"
-
-import { Cloud, CloudRain, Sun, Wind, Droplets, Eye, Gauge, Sunrise, Sunset } from "lucide-react"
-import { Card } from "@/components/ui/card"
-
-interface WeatherData {
-  name: string
-  sys: {
-    country: string
-    sunrise: number
-    sunset: number
-  }
-  main: {
-    temp: number
-    feels_like: number
-    humidity: number
-    pressure: number
-  }
-  weather: Array<{
-    main: string
-    description: string
-  }>
-  wind: {
-    speed: number
-  }
-  visibility: number
-}
+import WeatherIcon from "@/components/weather-icon"
+import { formatLongDate, formatTime, unitLabels, type DailyForecast, type Unit, type WeatherData } from "@/lib/weather"
 
 interface CurrentWeatherProps {
   data: WeatherData
-  unit: "metric" | "imperial"
+  unit: Unit
+  today?: DailyForecast
   lastUpdated: Date | null
+  night: boolean
 }
 
-const getWeatherIcon = (description: string, main: string) => {
-  const mainUpper = main.toUpperCase()
-  if (mainUpper.includes("RAIN") || mainUpper.includes("DRIZZLE")) {
-    return <CloudRain className="w-16 h-16 text-blue-400" />
-  }
-  if (mainUpper.includes("CLOUD")) {
-    return <Cloud className="w-16 h-16 text-gray-400" />
-  }
-  if (mainUpper.includes("CLEAR") || mainUpper.includes("SUNNY")) {
-    return <Sun className="w-16 h-16 text-yellow-400" />
-  }
-  // Default to sun for unknown conditions
-  return <Sun className="w-16 h-16 text-yellow-400" />
-}
+export default function CurrentWeather({ data, unit, today, lastUpdated, night }: CurrentWeatherProps) {
+  const { temp: tempUnit } = unitLabels(unit)
+  const condition = data.weather[0]
+  const high = Math.round(Math.max(data.main.temp_max, today?.max ?? -Infinity))
+  const low = Math.round(Math.min(data.main.temp_min, today?.min ?? Infinity))
+  const nowUnix = Math.floor(Date.now() / 1000)
 
-export default function CurrentWeather({ data, unit, lastUpdated }: CurrentWeatherProps) {
-  try {
-    if (!data || !data.main || !data.sys || !data.weather || !data.wind) {
-      return <div className="text-red-500">Error: Invalid weather data</div>
-    }
-
-    const temp = Math.round(data.main.temp)
-    const feelsLike = Math.round(data.main.feels_like)
-    const condition = data.weather[0].main
-    const description = data.weather[0].description
-    const tempUnit = unit === "metric" ? "°C" : "°F"
-    const speedUnit = unit === "metric" ? "m/s" : "mph"
-
-    let sunrise = "N/A"
-    let sunset = "N/A"
-
-    try {
-      sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })
-      sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })
-    } catch (e) {
-      console.error("[v0] Error formatting sunset/sunrise:", e)
-    }
-
-    const formattedTime = lastUpdated
-      ? lastUpdated.toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        })
-      : "Unknown"
-
-    return (
-      <Card className="bg-white/95 dark:bg-slate-800/95 backdrop-blur border-0 shadow-2xl p-8 md:p-10">
-        <div className="text-right text-xs text-muted-foreground mb-4">Last updated: {formattedTime}</div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Left: City and Temperature */}
-          <div className="flex flex-col justify-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-2">
-              {data.name}, {data.sys.country}
-            </h2>
-            <div className="flex items-center gap-4 my-6">
-              {getWeatherIcon(description, condition)}
-              <div>
-                <div className="text-6xl font-bold text-primary">
-                  {temp}
-                  {tempUnit}
-                </div>
-                <p className="text-lg text-muted-foreground capitalize">{description}</p>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Feels like {feelsLike}
-              {tempUnit}
-            </p>
-          </div>
-
-          {/* Right: Weather Details */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 dark:bg-slate-700/50 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                <Wind size={18} />
-                <span className="text-sm font-semibold">Wind Speed</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">
-                {data.wind.speed} {speedUnit}
-              </p>
-            </div>
-
-            <div className="bg-blue-50 dark:bg-slate-700/50 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                <Droplets size={18} />
-                <span className="text-sm font-semibold">Humidity</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{data.main.humidity}%</p>
-            </div>
-
-            <div className="bg-blue-50 dark:bg-slate-700/50 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                <Eye size={18} />
-                <span className="text-sm font-semibold">Visibility</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">
-                {unit === "metric"
-                  ? (data.visibility / 1000).toFixed(1) + " km"
-                  : (data.visibility / 1609).toFixed(1) + " mi"}
-              </p>
-            </div>
-
-            <div className="bg-blue-50 dark:bg-slate-700/50 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                <Gauge size={18} />
-                <span className="text-sm font-semibold">Pressure</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{data.main.pressure} hPa</p>
-            </div>
-
-            <div className="bg-blue-50 dark:bg-slate-700/50 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                <Sunrise size={18} />
-                <span className="text-sm font-semibold">Sunrise</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{sunrise}</p>
-            </div>
-
-            <div className="bg-blue-50 dark:bg-slate-700/50 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                <Sunset size={18} />
-                <span className="text-sm font-semibold">Sunset</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{sunset}</p>
-            </div>
-          </div>
+  return (
+    <section className="panel relative overflow-hidden p-6 md:p-8" aria-labelledby="city-name">
+      <div
+        className={`pointer-events-none absolute -right-10 -top-10 size-64 rounded-full blur-3xl ${night ? "bg-indigo-200/15" : "bg-amber-200/30"}`}
+        aria-hidden
+      />
+      <div className="relative flex items-start justify-between gap-4">
+        <div>
+          <h1 id="city-name" className="font-display text-4xl font-semibold leading-tight tracking-tight text-shadow md:text-5xl">
+            {data.name}
+            <span className="ml-2 align-middle text-base font-semibold tracking-wide text-white/75 md:text-lg">{data.sys.country}</span>
+          </h1>
+          <p className="mt-1 text-white/85">
+            {formatLongDate(nowUnix, data.timezone)} · {formatTime(nowUnix, data.timezone)}
+          </p>
         </div>
-      </Card>
-    )
-  } catch (error) {
-    console.error("[v0] Error rendering CurrentWeather:", error)
-    return <div className="text-red-500">Error displaying weather information</div>
-  }
+        <WeatherIcon main={condition?.main ?? "Clear"} night={night} className="size-20 shrink-0 md:size-28" strokeWidth={1.25} />
+      </div>
+
+      <div className="relative mt-6 flex items-end gap-2">
+        <p className="font-display text-[6.5rem] font-light leading-[0.85] tracking-tighter tabular-nums text-shadow md:text-[8.5rem]">
+          {Math.round(data.main.temp)}°
+        </p>
+        <span className="mb-3 text-xl font-semibold text-white/80">{tempUnit.slice(1)}</span>
+      </div>
+
+      <p className="relative mt-4 text-xl font-semibold capitalize">{condition?.description}</p>
+      <p className="relative mt-1 text-white/85">
+        <span>H {high}°</span>
+        <span className="mx-2 text-white/50">/</span>
+        <span>L {low}°</span>
+        <span className="mx-2 text-white/50">·</span>
+        <span>Feels like {Math.round(data.main.feels_like)}°</span>
+      </p>
+
+      {lastUpdated && (
+        <p className="relative mt-6 text-xs text-white/70">
+          Updated {lastUpdated.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })} your time
+        </p>
+      )}
+    </section>
+  )
 }

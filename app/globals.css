@@ -76,8 +76,8 @@
 }
 
 @theme inline {
-  --font-sans: "Geist", "Geist Fallback";
-  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --font-sans: "Figtree Variable", system-ui, sans-serif;
+  --font-display: "Fraunces Variable", Georgia, serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -122,5 +122,91 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* ---------- sky backgrounds: condition × day/night ---------- */
+.sky {
+  --top: #2a63a8;
+  --bottom: #5f9ad8;
+  --glow: rgba(255, 214, 120, 0.45);
+  background:
+    radial-gradient(60rem 30rem at 85% -10%, var(--glow), transparent 60%),
+    linear-gradient(180deg, var(--top) 0%, var(--bottom) 100%);
+  color: #fff;
+  transition: background-color 600ms ease;
+}
+.sky[data-sky="clear"][data-night="true"] {
+  --top: #0b1530;
+  --bottom: #24365f;
+  --glow: rgba(178, 196, 255, 0.22);
+}
+.sky[data-sky="clouds"] {
+  --top: #4c6178;
+  --bottom: #7f93a8;
+  --glow: rgba(255, 240, 210, 0.25);
+}
+.sky[data-sky="clouds"][data-night="true"] {
+  --top: #141c2a;
+  --bottom: #34425a;
+  --glow: rgba(170, 185, 220, 0.16);
+}
+.sky[data-sky="rain"] {
+  --top: #2b3a4d;
+  --bottom: #536680;
+  --glow: rgba(150, 190, 230, 0.22);
+}
+.sky[data-sky="rain"][data-night="true"] {
+  --top: #0f1622;
+  --bottom: #2a3648;
+}
+.sky[data-sky="storm"] {
+  --top: #1e1d30;
+  --bottom: #45425f;
+  --glow: rgba(200, 170, 255, 0.25);
+}
+.sky[data-sky="snow"] {
+  --top: #5e7591;
+  --bottom: #9aaec4;
+  --glow: rgba(255, 255, 255, 0.35);
+}
+.sky[data-sky="snow"][data-night="true"] {
+  --top: #26324a;
+  --bottom: #4f6382;
+}
+.sky[data-sky="mist"] {
+  --top: #5d6875;
+  --bottom: #8e98a3;
+  --glow: rgba(255, 236, 200, 0.25);
+}
+.sky[data-sky="mist"][data-night="true"] {
+  --top: #1d232c;
+  --bottom: #3e4753;
+}
+
+.panel {
+  background: rgba(8, 18, 36, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 1.5rem;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+}
+.text-shadow {
+  text-shadow: 0 1px 12px rgba(0, 20, 50, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

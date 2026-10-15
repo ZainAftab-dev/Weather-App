@@ -1,268 +1,181 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { CloudOff, LocateFixed, RotateCw } from "lucide-react"
 import CurrentWeather from "@/components/current-weather"
-import SearchBar from "@/components/search-bar"
-import ForecastCard from "@/components/forecast-card"
-import LoadingSpinner from "@/components/loading-spinner"
+import WeatherDetails from "@/components/weather-details"
 import HourlyForecast from "@/components/hourly-forecast"
-import { MapPin } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import DailyForecast from "@/components/daily-forecast"
+import SearchBar from "@/components/search-bar"
+import LoadingSpinner from "@/components/loading-spinner"
+import { getWeather, groupDaily, isNight, skyFor, type ForecastItem, type Unit, type WeatherData } from "@/lib/weather"
 
-interface WeatherData {
-  name: string
-  sys: {
-    country: string
-    sunrise: number
-    sunset: number
-  }
-  main: {
-    temp: number
-    feels_like: number
-    humidity: number
-    pressure: number
-  }
-  weather: Array<{
-    main: string
-    description: string
-  }>
-  wind: {
-    speed: number
-  }
-  visibility: number
-}
+const RECENT_KEY = "weather-recent-cities"
 
-interface ForecastItem {
-  dt: number
-  main: {
-    temp: number
-    humidity: number
-  }
-  weather: Array<{
-    main: string
-    description: string
-  }>
-}
-
-const API_KEY = "fb8de5c7d63da57183ef875cd7a1103e"
+type Source = { kind: "city"; name: string } | { kind: "coords"; lat: number; lon: number }
 
 export default function Home() {
-  const [city, setCity] = useState("New York")
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
-  const [forecast, setForecast] = useState<ForecastItem[]>([])
-  const [hourlyForecast, setHourlyForecast] = useState<ForecastItem[]>([])
-  const [loading, setLoading] = useState(false)
+  const [source, setSource] = useState<Source>({ kind: "city", name: "New York" })
+  const [unit, setUnit] = useState<Unit>("metric")
+  const [weather, setWeather] = useState<WeatherData | null>(null)
+  const [list, setList] = useState<ForecastItem[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [initialized, setInitialized] = useState(false)
-  const [unit, setUnit] = useState<"metric" | "imperial">("metric")
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [recent, setRecent] = useState<string[]>([])
 
-  const fetchWeather = async (searchCity: string, selectedUnit: "metric" | "imperial" = unit) => {
-    setLoading(true)
-    setError("")
+  useEffect(() => {
     try {
-      const weatherRes = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(searchCity)}&units=${selectedUnit}&appid=${API_KEY}`,
-      )
+      const saved = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]")
+      if (Array.isArray(saved)) setRecent(saved.filter((x) => typeof x === "string").slice(0, 5))
+    } catch {}
+  }, [])
 
-      if (!weatherRes.ok) {
-        throw new Error(weatherRes.status === 404 ? "City not found" : "Failed to fetch weather")
+  const remember = useCallback((name: string) => {
+    setRecent((prev) => {
+      const next = [name, ...prev.filter((c) => c.toLowerCase() !== name.toLowerCase())].slice(0, 5)
+      try {
+        localStorage.setItem(RECENT_KEY, JSON.stringify(next))
+      } catch {}
+      return next
+    })
+  }, [])
+
+  const load = useCallback(
+    async (src: Source, u: Unit) => {
+      setLoading(true)
+      setError("")
+      try {
+        const query = src.kind === "city" ? `q=${encodeURIComponent(src.name)}` : `lat=${src.lat}&lon=${src.lon}`
+        const data = await getWeather(query, u)
+        setWeather(data.weather)
+        setList(data.list)
+        setLastUpdated(new Date())
+        remember(data.weather.name)
+      } catch (err) {
+        setError(err instanceof Error && err.message !== "Failed to fetch" ? err.message : "Couldn't reach the weather service")
+      } finally {
+        setLoading(false)
       }
+    },
+    [remember],
+  )
 
-      const weather: WeatherData = await weatherRes.json()
+  useEffect(() => {
+    load(source, unit)
+  }, [source, unit, load])
 
-      const forecastRes = await fetch(
-        `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(searchCity)}&units=${selectedUnit}&appid=${API_KEY}`,
-      )
-
-      if (!forecastRes.ok) {
-        throw new Error("Failed to fetch forecast")
-      }
-
-      const forecastData = await forecastRes.json()
-
-      setWeatherData(weather)
-      setCity(weather.name)
-      setLastUpdated(new Date())
-
-      // Get hourly forecasts (next 24 hours)
-      const hourly = forecastData.list.slice(0, 8)
-      setHourlyForecast(hourly)
-
-      // Get one forecast per day (every 8 items = 24 hours)
-      const dailyForecasts = forecastData.list.filter((_: any, index: number) => index % 8 === 0)
-      setForecast(dailyForecasts.slice(0, 5))
-
-      console.log("[v0] Weather data fetched successfully for:", weather.name)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch weather"
-      setError(errorMessage)
-      console.error("[v0] Weather fetch error:", errorMessage)
-      setWeatherData(null)
-      setForecast([])
-      setHourlyForecast([])
-    } finally {
-      setLoading(false)
-    }
+  const search = (city: string) => {
+    const name = city.trim()
+    if (!name) return
+    setSource({ kind: "city", name })
   }
 
-  const handleSearch = (searchCity: string) => {
-    const trimmed = searchCity.trim()
-    if (trimmed) {
-      console.log("[v0] Searching for city:", trimmed)
-      fetchWeather(trimmed, unit)
-    } else {
-      setError("Please enter a city name")
-    }
-  }
-
-  const handleGeolocation = () => {
+  const locate = () => {
     if (!("geolocation" in navigator)) {
-      setError("Geolocation is not supported by your browser")
+      setError("Your browser can't share its location")
       return
     }
-
     setLoading(true)
-    setError("")
-
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords
-        console.log("[v0] Geolocation obtained:", latitude, longitude)
-
-        try {
-          const res = await fetch(
-            `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=${unit}&appid=${API_KEY}`,
-          )
-
-          if (!res.ok) {
-            throw new Error("Failed to fetch weather for your location")
-          }
-
-          const data: WeatherData = await res.json()
-          console.log("[v0] Location-based weather fetched:", data.name)
-          await fetchWeather(data.name, unit)
-        } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : "Failed to fetch weather for your location"
-          setError(errorMessage)
-          console.error("[v0] Geolocation weather fetch error:", errorMessage)
-          setLoading(false)
-        }
-      },
-      (error) => {
-        let errorMessage = "Unable to access your location"
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMessage = "Location permission denied"
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          errorMessage = "Location information unavailable"
-        } else if (error.code === error.TIMEOUT) {
-          errorMessage = "Location request timed out"
-        }
-        console.error("[v0] Geolocation error:", errorMessage)
-        setError(errorMessage)
+      (pos) => setSource({ kind: "coords", lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      (err) => {
         setLoading(false)
+        setError(
+          err.code === err.PERMISSION_DENIED
+            ? "Location permission was denied"
+            : err.code === err.TIMEOUT
+              ? "Finding your location took too long"
+              : "Your location isn't available right now",
+        )
       },
+      { timeout: 10000 },
     )
   }
 
-  const handleUnitToggle = () => {
-    const newUnit = unit === "metric" ? ("imperial" as const) : ("metric" as const)
-    console.log("[v0] Toggling unit to:", newUnit)
-    setUnit(newUnit)
-    if (weatherData && city) {
-      fetchWeather(city, newUnit)
-    }
-  }
-
-  useEffect(() => {
-    if (!initialized) {
-      setInitialized(true)
-      console.log("[v0] Initializing weather app with city:", city)
-      fetchWeather(city)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const sky = weather ? skyFor(weather.weather[0]?.main ?? "Clear") : "clear"
+  const night = weather ? isNight(weather) : false
+  const daily = weather ? groupDaily(list, weather.timezone) : []
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-400 via-blue-300 to-blue-200 dark:from-slate-900 dark:via-blue-900 dark:to-slate-800 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">Weather Forecast</h1>
-            <p className="text-blue-100 text-lg drop-shadow">Real-time weather updates and forecasts</p>
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              onClick={handleGeolocation}
-              className="bg-white/95 hover:bg-white text-blue-600 font-semibold rounded-lg flex items-center gap-2 shadow-lg"
+    <main className="sky min-h-dvh" data-sky={sky} data-night={night}>
+      <div className="mx-auto max-w-6xl px-4 pb-14 pt-6 md:px-8 md:pt-8">
+        <header className="flex flex-wrap items-center justify-between gap-3">
+          <p className="font-display text-2xl font-semibold tracking-tight text-shadow">
+            Weather<span className="text-white/70">cast</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={locate}
+              className="inline-flex h-10 items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 text-sm font-semibold backdrop-blur transition hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
-              <MapPin size={18} />
-              <span className="hidden sm:inline">My Location</span>
-            </Button>
-            <Button
-              onClick={handleUnitToggle}
-              className="bg-white/95 hover:bg-white text-blue-600 font-semibold rounded-lg shadow-lg"
-            >
-              {unit === "metric" ? "°C" : "°F"}
-            </Button>
+              <LocateFixed className="size-4" aria-hidden />
+              <span className="hidden sm:inline">My location</span>
+              <span className="sr-only sm:hidden">Use my location</span>
+            </button>
+            <div role="group" aria-label="Temperature unit" className="flex h-10 rounded-full border border-white/25 bg-white/10 p-1 backdrop-blur">
+              {(["metric", "imperial"] as const).map((u) => (
+                <button
+                  key={u}
+                  type="button"
+                  aria-pressed={unit === u}
+                  onClick={() => setUnit(u)}
+                  className="min-w-11 rounded-full px-3 text-sm font-bold text-white/80 transition aria-pressed:bg-white aria-pressed:text-slate-900 focus-visible:outline-2 focus-visible:outline-white"
+                >
+                  {u === "metric" ? "°C" : "°F"}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </header>
 
-        {/* Search Bar */}
-        <SearchBar onSearch={handleSearch} />
+        <SearchBar onSearch={search} recent={recent} />
 
-        {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 rounded-lg border border-red-300 dark:border-red-700 flex justify-between items-center">
-            <span>{error}</span>
-            <Button
-              onClick={() => {
-                if (city) fetchWeather(city, unit)
-              }}
-              className="text-sm bg-red-600 hover:bg-red-700 text-white"
+          <div role="alert" className="panel mb-6 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <CloudOff className="mt-0.5 size-6 shrink-0" aria-hidden />
+              <div>
+                <p className="font-semibold">{error}</p>
+                <p className="text-sm text-white/80">
+                  {error === "City not found" ? "Check the spelling, or add the country: “Paris, FR”." : "Check your connection and try again."}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => load(source, unit)}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-bold text-slate-900 transition hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
-              Retry
-            </Button>
+              <RotateCw className="size-4" aria-hidden />
+              Try again
+            </button>
           </div>
         )}
 
-        {/* Loading State */}
-        {loading && <LoadingSpinner />}
+        {loading && !weather && <LoadingSpinner />}
 
-        {/* Current Weather */}
-        {!loading && weatherData && (
-          <>
-            <CurrentWeather data={weatherData} unit={unit} lastUpdated={lastUpdated} />
-
-            {hourlyForecast.length > 0 && (
-              <div className="mt-12">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 drop-shadow-lg">Hourly Forecast</h2>
-                <HourlyForecast forecast={hourlyForecast} unit={unit} />
-              </div>
-            )}
-
-            {/* Forecast Section */}
-            {forecast.length > 0 && (
-              <div className="mt-12">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 drop-shadow-lg">5-Day Forecast</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                  {forecast.map((item, index: number) => (
-                    <ForecastCard key={`${item.dt}-${index}`} data={item} unit={unit} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Empty State */}
-        {!loading && !weatherData && !error && (
-          <div className="text-center mt-12">
-            <p className="text-white text-lg drop-shadow">Search for a city to get started</p>
+        {weather && (
+          <div className={`grid grid-cols-[minmax(0,1fr)] gap-5 transition-opacity ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+              <CurrentWeather data={weather} unit={unit} today={daily[0]} lastUpdated={lastUpdated} night={night} />
+              <WeatherDetails data={weather} unit={unit} />
+            </div>
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+              <HourlyForecast forecast={list.slice(0, 8)} unit={unit} offset={weather.timezone} sunrise={weather.sys.sunrise} sunset={weather.sys.sunset} />
+              <DailyForecast days={daily} unit={unit} offset={weather.timezone} />
+            </div>
           </div>
         )}
+
+        <footer className="mt-10 text-center text-xs text-white/75">
+          Data from{" "}
+          <a href="https://openweathermap.org" className="underline underline-offset-2 hover:text-white">
+            OpenWeatherMap
+          </a>
+          . Times are shown in the city&apos;s local time.
+        </footer>
       </div>
     </main>
   )

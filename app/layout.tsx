@@ -1,16 +1,14 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import "@fontsource-variable/fraunces"
+import "@fontsource-variable/figtree"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Weather App - Real-time Weather Forecasts",
+  title: "Weather Forecast · Current conditions, hourly and 5-day outlook",
   description: "Get accurate weather forecasts, current conditions, and temperature updates for any location",
-  generator: "v0.app",
   icons: {
     icon: [
       {
@@ -37,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans antialiased`}>
+      <body className="bg-[#2a63a8] font-sans antialiased">
         {children}
         <Analytics />
       </body>

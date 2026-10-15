@@ -15,16 +15,24 @@ Current conditions, a 24-hour forecast and a 5-day outlook for any city in the w
 
 ---
 
+## Design
+
+The page is a sky that follows the weather: the background changes with the condition (clear, clouds, rain, storm, snow, mist) and with day or night in the searched city. Text sits on frosted panels so it stays readable on every sky. Headings and numbers use Fraunces; body text uses Figtree.
+
+- **Hero card:** city, local date and time, a large temperature, the condition, today's high and low, and "feels like"
+- **Detail tiles:** wind speed with a direction arrow, humidity with a fill bar, visibility, pressure with a low/normal/high hint, and a **sun arc** that shows where the sun is between sunrise and sunset, plus the hours of daylight
+- **Next 24 hours:** a smooth temperature curve with icons (day or night), times and chance of rain for each 3-hour step; scrolls sideways on phones
+- **5-day outlook:** one row per day with the condition around midday, chance of rain, and a low-to-high range bar on a shared scale
+- **States:** skeleton while loading, a frosted error panel with **Try again**, and recent searches as one-tap chips
+
 ## Features
 
-- **City search:** look up the weather for any city by name (opens on New York)
-- **My Location:** one click uses the browser's geolocation to show the weather where you are
-- **Current weather card:** temperature, "feels like", description and icon, humidity, wind speed, pressure, visibility, sunrise and sunset, and a "last updated" time
-- **Hourly forecast:** the next 24 hours in 3-hour steps
-- **5-day forecast:** one card per day with the expected conditions
+- **City search:** look up the weather for any city by name (opens on New York); the last five cities are saved in your browser
+- **My location:** uses the browser's geolocation and loads the weather by coordinates
 - **°C / °F toggle:** reloads the data in metric or imperial units
-- **Error handling:** clear messages for unknown cities or network problems, with a Retry button
-- **Responsive design** with a light gradient theme and dark-mode styles
+- **City-local times:** sunrise, sunset, hourly times and day names use the searched city's time zone, not yours
+- **Daily highs and lows** are worked out from all the 3-hour readings for each day
+- **Accessible:** labelled controls, visible focus, screen-reader text for the chart and range bars, reduced-motion support
 
 ## Tech stack
 
@@ -32,7 +40,7 @@ Current conditions, a 24-hour forecast and a 5-day outlook for any city in the w
 |---|---|
 | Framework | Next.js 16 (App Router), React 19 |
 | Language | TypeScript |
-| UI | Tailwind CSS 4, shadcn/ui, Lucide icons |
+| UI | Tailwind CSS 4, Lucide icons, Fraunces + Figtree via Fontsource |
 | Data | [OpenWeatherMap API](https://openweathermap.org/api) (Current Weather + 5 day / 3 hour Forecast) |
 
 ## Getting started
@@ -45,11 +53,13 @@ cd Weather-App
 npm install
 ```
 
-Set your API key in `app/page.tsx`:
+Add your API key in a `.env.local` file:
 
-```ts
-const API_KEY = "your_openweathermap_api_key"
+```bash
+NEXT_PUBLIC_OPENWEATHER_API_KEY=your_openweathermap_api_key
 ```
+
+(Without it the app falls back to the demo key in `lib/weather.ts`, which may be rate-limited.)
 
 Then start the app:
 
@@ -74,16 +84,20 @@ Open [http://localhost:3000](http://localhost:3000). For a production build: `np
 ```
 app/
 ├── layout.tsx               # root layout and metadata
-├── page.tsx                 # state, API calls, geolocation, unit toggle
+├── page.tsx                 # state, loading, geolocation, unit toggle, recent searches
 ├── loading.tsx              # loading state
 ├── actions.ts               # server-action versions of the API calls (reads OPENWEATHER_API_KEY)
 └── globals.css
 components/
-├── search-bar.tsx           # city search
-├── current-weather.tsx      # current conditions card
-├── hourly-forecast.tsx      # next 24 hours
-├── forecast-card.tsx        # one day of the 5-day forecast
-└── loading-spinner.tsx
+├── search-bar.tsx           # city search and recent-city chips
+├── current-weather.tsx      # hero card
+├── weather-details.tsx      # wind, humidity, visibility, pressure, sun arc
+├── hourly-forecast.tsx      # temperature curve for the next 24 hours
+├── daily-forecast.tsx       # 5-day rows with range bars
+├── weather-icon.tsx         # condition → Lucide icon (day/night)
+└── loading-spinner.tsx      # loading skeleton
+lib/
+└── weather.ts               # API calls, types, time-zone helpers, daily grouping, sky themes
 ```
 
 ## Troubleshooting
@@ -92,11 +106,11 @@ components/
 |---|---|
 | "City not found" | Check the spelling, or add the country code, e.g. `Lahore,PK` |
 | My Location does nothing | Allow location access in the browser; geolocation needs `https` or `localhost` |
-| "Invalid API key" | Check the key in `app/page.tsx`; new keys need time to activate |
+| "Invalid API key" | Check `NEXT_PUBLIC_OPENWEATHER_API_KEY`; new keys need time to activate |
 
 ## Deployment
 
-Import the repository into [Vercel](https://vercel.com/new) and deploy with the default settings.
+Import the repository into [Vercel](https://vercel.com/new), add `NEXT_PUBLIC_OPENWEATHER_API_KEY` under Environment Variables, and deploy.
 
 ## Author
 
